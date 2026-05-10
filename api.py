@@ -1,10 +1,3 @@
-"""
-FastAPI backend for Gamified Habit Tracker
-- SQLite persistence (data survives restarts)
-- JWT authentication (register/login)
-- Cookie-based session for JWT token
-"""
-
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse

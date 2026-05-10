@@ -1,17 +1,11 @@
-"""
-Gamified Habit Tracker — Streamlit Frontend
-- JWT auth (login / register screens)
-- Token stored in st.session_state, sent as cookie on every API call
-- /data and /stats cached per-rerun to avoid redundant calls
-"""
-
 import streamlit as st
 import requests
 from datetime import date, timedelta
+import os
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-API_BASE     = "http://localhost:8000"
+API_BASE = os.getenv("API_BASE_URL", "http://localhost:8000")
 TODAY        = date.today().isoformat()
 TOKEN_COOKIE = "habitquest_token"
 
