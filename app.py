@@ -1,11 +1,18 @@
+"""
+Gamified Habit Tracker — Streamlit Frontend
+- JWT auth (login / register screens)
+- Token stored in st.session_state, sent as cookie on every API call
+- /data and /stats cached per-rerun to avoid redundant calls
+"""
+
 import streamlit as st
 import requests
-from datetime import date, timedelta
 import os
+from datetime import date, timedelta
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-API_BASE = os.getenv("API_BASE_URL", "http://localhost:8000")
+API_BASE     = os.getenv("API_BASE_URL", "http://localhost:8000")
 TODAY        = date.today().isoformat()
 TOKEN_COOKIE = "habitquest_token"
 
@@ -152,13 +159,16 @@ def _save_token(response: requests.Response):
 
 def api_get(path: str) -> dict:
     try:
-        r = requests.get(f"{API_BASE}{path}", headers=_auth_headers(), timeout=5)
+        r = requests.get(f"{API_BASE}{path}", headers=_auth_headers(), timeout=30)
         _save_token(r)
         if r.status_code == 401:
             st.session_state.pop("token", None)
             st.session_state.pop("username", None)
             st.rerun()
         return r.json()
+    except requests.exceptions.Timeout:
+        st.warning("⏳ Server is waking up from sleep — please wait a moment and try again.")
+        return {}
     except Exception as e:
         st.error(f"API error: {e}")
         return {}
@@ -166,9 +176,12 @@ def api_get(path: str) -> dict:
 
 def api_post(path: str, payload: dict) -> dict:
     try:
-        r = requests.post(f"{API_BASE}{path}", json=payload, headers=_auth_headers(), timeout=5)
+        r = requests.post(f"{API_BASE}{path}", json=payload, headers=_auth_headers(), timeout=30)
         _save_token(r)
         return r.json()
+    except requests.exceptions.Timeout:
+        st.warning("⏳ Server is waking up from sleep — please wait a moment and try again.")
+        return {}
     except Exception as e:
         st.error(f"API error: {e}")
         return {}
@@ -176,9 +189,12 @@ def api_post(path: str, payload: dict) -> dict:
 
 def api_delete(path: str) -> dict:
     try:
-        r = requests.delete(f"{API_BASE}{path}", headers=_auth_headers(), timeout=5)
+        r = requests.delete(f"{API_BASE}{path}", headers=_auth_headers(), timeout=30)
         _save_token(r)
         return r.json()
+    except requests.exceptions.Timeout:
+        st.warning("⏳ Server is waking up from sleep — please wait a moment and try again.")
+        return {}
     except Exception as e:
         st.error(f"API error: {e}")
         return {}
@@ -190,9 +206,11 @@ def fetch_data(token: str):
     """Cache keyed by token so different users don't share data."""
     try:
         headers = {"Authorization": f"Bearer {token}"}
-        data  = requests.get(f"{API_BASE}/data",  headers=headers, timeout=5).json()
-        stats = requests.get(f"{API_BASE}/stats", headers=headers, timeout=5).json()
+        data  = requests.get(f"{API_BASE}/data",  headers=headers, timeout=30).json()
+        stats = requests.get(f"{API_BASE}/stats", headers=headers, timeout=30).json()
         return data, stats
+    except requests.exceptions.Timeout:
+        return {}, {}
     except Exception:
         return {}, {}
 
